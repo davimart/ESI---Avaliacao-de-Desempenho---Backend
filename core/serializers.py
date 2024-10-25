@@ -38,4 +38,3 @@ class ChamadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chamado
         fields = '__all__'
-
