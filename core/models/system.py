@@ -1,44 +1,14 @@
 from django.db import models
 
-class Usuario(models.Model):
-    id = models.AutoField(primary_key=True)
-    nome_completo = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
-    data_nascimento = models.DateField()
-    rg = models.CharField(max_length=50, blank=True, null=True)
-    local_nascimento = models.CharField(max_length=100, blank=True, null=True)
-    nacionalidade = models.CharField(max_length=50, blank=True, null=True)
-    curso = models.CharField(max_length=50)
-    link_lattes = models.URLField(blank=True, null=True)
-    data_matricula = models.DateField(blank=True, null=True)
-    data_aprovacao_exame_qualificacao = models.DateField(blank=True, null=True)
-    data_aprovacao_exame_proficiencia = models.DateField(blank=True, null=True)
-    data_limite_deposito_trabalho = models.DateField(blank=True, null=True)
-    tipo = models.CharField(max_length=50)  # 'Aluno', 'Orientador', 'Comissao'
-    
-    class Meta:
-        db_table = 'Usuario'
+from core.models.people import Usuario, Aluno, Orientador
 
-class Aluno(models.Model):
-    id_matricula = models.CharField(max_length=50, unique=True)
-    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, primary_key=True)
-    orientador = models.ForeignKey('Orientador', on_delete=models.CASCADE)
-    
-    class Meta:
-        db_table = 'Aluno'
-
-class Orientador(models.Model):
-    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, primary_key=True)
-    numero_alunos_orientados = models.IntegerField(default=0)
-    
-    class Meta:
-        db_table = 'Orientador'
 
 class Comissao(models.Model):
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, primary_key=True)
     
     class Meta:
         db_table = 'Comissao'
+
 
 class Disciplina(models.Model):
     nome = models.CharField(max_length=255)
@@ -50,6 +20,7 @@ class Disciplina(models.Model):
     
     class Meta:
         db_table = 'Disciplina'
+
 
 class RelatorioDesempenho(models.Model):
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
@@ -64,6 +35,7 @@ class RelatorioDesempenho(models.Model):
     class Meta:
         db_table = 'RelatorioDesempenho'
 
+
 class HistoricoDisciplina(models.Model):
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
     disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE)
@@ -71,6 +43,7 @@ class HistoricoDisciplina(models.Model):
     
     class Meta:
         db_table = 'HistoricoDisciplina'
+
 
 class Relatorio(models.Model):
     aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE)
@@ -81,6 +54,7 @@ class Relatorio(models.Model):
 
     class Meta:
         db_table = 'Relatorio'
+
 
 class Avaliacao(models.Model):
     relatorio = models.ForeignKey(Relatorio, on_delete=models.CASCADE)
@@ -95,6 +69,7 @@ class Avaliacao(models.Model):
 
     class Meta:
         db_table = 'Avaliacao'
+
 
 class Chamado(models.Model):
     relatorio = models.ForeignKey(Relatorio, on_delete=models.CASCADE)

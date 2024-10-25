@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from faker import Faker
-from core.models import Aluno, Orientador, Comissao, Disciplina, Relatorio, Avaliacao, Chamado
+from core.models.system import Disciplina
+
 
 class Command(BaseCommand):
     help = 'Populate the database with mock data'
