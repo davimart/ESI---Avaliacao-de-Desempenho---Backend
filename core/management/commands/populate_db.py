@@ -1,30 +1,14 @@
+import random
+
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
 from faker import Faker
-from core.models import Aluno, Usuario, Orientador, Comissao, Disciplina, Relatorio, Avaliacao, Chamado
-from datetime import date, timedelta
-import random
+
+from core.models.people import Aluno, Usuario, Orientador
+from core.models.system import Disciplina
 
 
 class Command(BaseCommand):
-    help = 'Populate the database with mock data'
-
-    '''
-    def handle(self, *args, **kwargs):
-        fake = Faker()
-
-        for _ in range(5):
-            Disciplina.objects.create(
-                nome=fake.word(),
-                professor=fake.name(),
-                numero_alunos=fake.random_int(min=5, max=30),
-                periodo=fake.random_element(elements=('1', '2', '3')),
-                semestre=fake.random_element(elements=('2023.1', '2023.2')),
-                sala=fake.random_element(elements=('101', '102', '103')),
-            )
-        self.stdout.write(self.style.SUCCESS('Successfully populated the database with mock data.'))
-    '''
-    
     def handle(self, *args, **kwargs):
         fake = Faker()
         try:
@@ -67,7 +51,3 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("Database populated successfully with mock data."))
         except IntegrityError as e:
             self.stdout.write(self.style.WARNING(f"Data already exists. Skipping insertion: {e}"))
-
-
-                
-
