@@ -72,6 +72,33 @@ def get_alunos_orientados(request):
     except Orientador.DoesNotExist:
         return JsonResponse({"error": "Orientador not found"}, status=404)
 
+@api_view(['GET'])
+def get_aluno_info(request):
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Authentication required"}, status=401)
+
+        if request.user.tipo != 'Aluno':
+            return JsonResponse({"error": "User is not an Aluno"}, status=403)
+
+        aluno = Aluno.objects.get(usuario=request.user)
+        print(aluno)
+
+        aluno_info = {
+                "id_matricula": aluno.id_matricula,
+                "nome_completo": aluno.usuario.nome_completo,
+                "email": aluno.usuario.email,
+                "curso": aluno.usuario.curso,
+                "data_matricula": aluno.usuario.data_matricula
+        }
+        print(aluno_info)
+
+        return Response(aluno_info, status=200)
+
+    except Aluno.DoesNotExist:
+        return JsonResponse({"error": "Aluno not found"}, status=404)
+
+
 
 @api_view(['POST'])
 def api_login(request):

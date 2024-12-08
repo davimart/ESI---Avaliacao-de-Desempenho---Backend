@@ -39,4 +39,5 @@ urlpatterns = [
     path('avaliacao/', views.post_avaliacao, name='post_avaliacao'),
     path('relatorio/', views.post_relatorio, name='post_relatorio'),
     path('orientador/alunos/', views.get_alunos_orientados),
+    path('aluno/info', views.get_aluno_info),
 ]
