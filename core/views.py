@@ -2,6 +2,9 @@ from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from rest_framework import generics, viewsets, status
 from rest_framework.decorators import api_view
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
 from rest_framework.response import Response
 from .models import Aluno, Usuario, Orientador, Comissao, Disciplina, Relatorio, Avaliacao, Chamado
 from .serializers import AlunoSerializer, OrientadorSerializer, ComissaoSerializer, DisciplinaSerializer, RelatorioSerializer, AvaliacaoSerializer, ChamadoSerializer
@@ -36,6 +39,128 @@ class ChamadoViewSet(viewsets.ModelViewSet):
     queryset = Chamado.objects.all()
     serializer_class = ChamadoSerializer
 
+
+@api_view(['GET'])
+def get_alunos_orientados(request):
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "Authentication required"}, status=401)
+
+        if request.user.tipo != 'Orientador':
+            return JsonResponse({"error": "User is not an Orientador"}, status=403)
+
+        orientador = Orientador.objects.get(usuario=request.user)
+
+        alunos = Aluno.objects.filter(orientador=orientador)
+
+        alunos_data = [
+            {
+                "id_matricula": aluno.id_matricula,
+                "nome_completo": aluno.usuario.nome_completo,
+                "email": aluno.usuario.email,
+                "curso": aluno.usuario.curso,
+                "data_matricula": aluno.usuario.data_matricula,
+            }
+            for aluno in alunos
+        ]
+
+        return Response({
+            "numero_alunos_orientados": alunos.count(),
+            "alunos": alunos_data
+        }, status=200)
+
+    except Orientador.DoesNotExist:
+        return JsonResponse({"error": "Orientador not found"}, status=404)
+
+
+@api_view(['POST'])
+def api_login(request):
+    email = request.data.get('email')
+    password = request.data.get('password')
+
+    print(email)
+    print(password)
+
+    user = authenticate(request, username=email, password=password)
+    if user is not None:
+        print('Authentication successful!')
+    else:
+        print('Authentication failed.')
+
+    if user:
+        token, created = Token.objects.get_or_create(user=user)
+        return JsonResponse({
+            'token': token.key,
+            'user_id': user.id,
+            'tipo': user.tipo,
+            'nome_completo': user.nome_completo,
+        })
+    else:
+        return JsonResponse({'error': 'Invalid credentials'}, status=400)
+
+@csrf_exempt
+def get_user_info(request, user_id):
+    try:
+        usuario = get_object_or_404(Usuario, id=user_id, tipo='Aluno')
+        aluno = get_object_or_404(Aluno, usuario=usuario)
+
+        user_data = {
+            "nomeParecerista": usuario.nome_completo,
+            "email": usuario.email,
+            "curso": usuario.curso,
+            "lattesLink": usuario.link_lattes,
+            "lattesUpdate": usuario.data_matricula.strftime("%Y-%m-%d") if usuario.data_matricula else None,
+            "mesAnoIngresso": usuario.data_matricula.strftime if usuario.data_matricula else None,
+            "nomeAluno": usuario.nome_completo,
+            "numeroUSP": aluno.id_matricula,
+            "nomeOrientador": aluno.orientador.usuario.nome_completo,
+            #"mesAnoIngresso": usuario.data_matricula,
+            "avaliacaoAnterior": "N/A",
+        }
+
+        return JsonResponse(user_data)
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
+
+@api_view(['GET'])
+def get_relatorio_by_matricula(request, matricula):
+    mock_data = {
+        "nomeParecerista": "John Doe",
+        "papelParecerista": "Professor",
+        "nomeAluno": "Alice Smith",
+        "parecerDesempenho": "",
+        "avaliacaoDesempenho": ""
+    }
+    return JsonResponse(mock_data)
+
+
+@api_view(['POST'])
+def post_avaliacao(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            print("Mocked relatorio data received:", data)
+            return JsonResponse({"status": "success", "message": "Relatório enviado com sucesso"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+
+@api_view(['POST'])
+def post_relatorio(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            print("Mocked relatorio data received:", data)
+            return JsonResponse({"status": "success", "message": "Relatório enviado com sucesso"})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": str(e)}, status=400)
+    return JsonResponse({"status": "error", "message": "Invalid method"}, status=405)
+
+
+
+"""
 @api_view(['GET'])
 def get_disciplinas(request, aluno_id):
     try:
@@ -56,7 +181,7 @@ def get_disciplinas(request, aluno_id):
         return JsonResponse({"disciplinas": disciplinas_data})
     except Aluno.DoesNotExist:
         return Response({"error": "Aluno nao encontrado"}, status=status.HTTP_404_NOT_FOUND)
-    
+
 @api_view(['GET'])
 def get_user_info(request, user_id):
     usuario = get_object_or_404(Usuario, id=user_id)
@@ -146,3 +271,44 @@ def set_relatorio(request):
         return Response({'error': 'Aluno nao encontrado.'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def signup_view(request):
+    if request.method == 'POST':
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+            tipo = form.cleaned_data['tipo']
+
+            # Create a Django User
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password
+            )
+
+            # Create the Usuario
+            usuario = Usuario.objects.create(
+                nome_completo=email.split('@')[0],
+                email=email,
+                tipo=tipo
+            )
+
+            # Link to the specific type
+            if tipo == Usuario.ALUNO:
+                Aluno.objects.create(usuario=usuario, id_matricula=f"MAT-{usuario.id}")
+            elif tipo == Usuario.ORIENTADOR:
+                Orientador.objects.create(usuario=usuario)
+            elif tipo == Usuario.COMISSAO:
+                Comissao.objects.create(usuario=usuario)
+
+            # Automatically log the user in and redirect
+            login(request, user)
+            return redirect('home')  # Replace 'home' with your desired redirect URL
+
+    else:
+        form = SignupForm()
+
+    return render(request, 'signup.html', {'form': form})
+"""

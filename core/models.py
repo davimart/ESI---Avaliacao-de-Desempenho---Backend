@@ -1,7 +1,9 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
-class Usuario(models.Model):
+class Usuario(AbstractUser):
     id = models.AutoField(primary_key=True)
+    username = models.CharField(max_length=150, blank=True, null=True)
     nome_completo = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     data_nascimento = models.DateField()
@@ -14,24 +16,42 @@ class Usuario(models.Model):
     data_aprovacao_exame_qualificacao = models.DateField(blank=True, null=True)
     data_aprovacao_exame_proficiencia = models.DateField(blank=True, null=True)
     data_limite_deposito_trabalho = models.DateField(blank=True, null=True)
-    tipo = models.CharField(max_length=50)
     tipo = models.CharField(max_length=50, choices=[
         ('Aluno', 'Aluno'),
         ('Orientador', 'Orientador'),
         ('Comissao', 'Comissao')
     ])
-    
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['nome_completo', 'tipo']
+
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='usuario_set',
+        blank=True
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='usuario_set',
+        blank=True
+    )
+
     class Meta:
         db_table = 'Usuario'
-        
+
 class Disciplina(models.Model):
     nome = models.CharField(max_length=255)
     professor = models.CharField(max_length=255)
     numero_alunos = models.IntegerField()
-    periodo = models.CharField(max_length=50)
+    periodo = models.CharField(max_length=50, choices=[
+        ('Noturno', 'Noturno'),
+        ('Diurno', 'Diurno'),
+        ('Matutino', 'Matutino'),
+        ('Integral', 'Integral')
+    ])
     semestre = models.CharField(max_length=50)
     sala = models.CharField(max_length=50)
-    
+
     class Meta:
         db_table = 'Disciplina'
 
@@ -46,13 +66,13 @@ class Aluno(models.Model):
 class Orientador(models.Model):
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, primary_key=True)
     numero_alunos_orientados = models.IntegerField(default=0)
-    
+
     class Meta:
         db_table = 'Orientador'
 
 class Comissao(models.Model):
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE, primary_key=True)
-    
+
     class Meta:
         db_table = 'Comissao'
 
@@ -65,7 +85,7 @@ class HistoricoDisciplina(models.Model):
     ])
     class Meta:
         db_table = 'HistoricoDisciplina'
-        
+
 class Avaliacao(models.Model):
     avaliador = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     parecer = models.TextField()
