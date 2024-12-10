@@ -33,11 +33,19 @@ urlpatterns = [
     path('', include(router.urls)),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
     path('login/', views.api_login, name='api_login'),
-    path('relatorio/<int:matricula_id>', views.get_relatorio_by_matricula, name='get_relatorio_by_matricula'),
-    path('user/<int:user_id>', views.get_user_info, name='get_user_info'),
-    path('avaliacao/', views.post_avaliacao, name='post_avaliacao'),
-    path('relatorio/', views.post_relatorio, name='post_relatorio'),
+
+
+    path('relatorio/', views.relatorios, name='relatorio_view'),
+    path('formulario/', views.formularios, name='formulario_view'),
+
     path('orientador/alunos/', views.get_alunos_orientados),
+    path('orientador/orientacoes/', views.get_orientacoes_for_orientador, name='get_orientacoes_for_orientador'),
+
+    path('avaliacao/', views.post_avaliacao, name='post_avaliacao'),
     path('aluno/info', views.get_aluno_info),
+
+    #remover
+    path('user/<int:user_id>', views.get_user_info, name='get_user_info'),
 ]
