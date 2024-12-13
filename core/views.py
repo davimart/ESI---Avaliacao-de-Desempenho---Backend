@@ -301,6 +301,8 @@ def post_relatorio(request):
         relatorio.apoioCoordenacao = data.get('apoioCoordenacao', '')
         relatorio.data_entrega = timezone.now().date()
 
+        relatorio.semestre = data.get('semestre', relatorio.semestre)
+
         relatorio.save()
         print(f"Relatorio updated successfully with ID: {relatorio.id}")
 
@@ -323,7 +325,7 @@ def post_relatorio(request):
     except Aluno.DoesNotExist:
         return JsonResponse({"error": "Aluno não encontrado."}, status=404)
     except Exception as e:
-        print(f"Error: {str(e)}")  # Debugging
+        print(f"Error: {str(e)}")
         return JsonResponse({"error": str(e)}, status=400)
 
 def get_relatorio(request):
